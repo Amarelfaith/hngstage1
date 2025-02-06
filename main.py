@@ -41,26 +41,10 @@ def get_fun_fact(n: int) -> str:
         return "No fact available."
 
 
-"""@app.get("/api/classify-number")
+@app.get("/api/classify-number")
 async def classify_number(number: int = Query(..., description="The number to analyze")):
     if not isinstance(number, int):
-        return {"number": number, "error": True}"""
-
-
-@app.get("/api/classify-number")
-async def classify_number(number: str = Query(..., description="The number to analyze")):
-    if not isinstance(number, int):
-        #if not number.isdigit():  # Ensure input is numeric
-        raise HTTPException(status_code=400, detail={
-                            "number": number, "error": True})
-
-    number = int(number)  # Convert to integer after validation
-
-    
-
-
-
-
+        return {"number": number, "error": True}
 
 
     properties = []
