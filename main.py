@@ -47,13 +47,13 @@ async def classify_number(number: int = Query(..., description="The number to an
         return {"number": number, "error": True}
 
     properties = []
+    if is_armstrong(number):
+        properties.append("armstrong")
     if number % 2 == 0:
         properties.append("even")
     else:
         properties.append("odd")
 
-    if is_armstrong(number):
-        properties.append("armstrong")
 
     return {
         "number": number,
