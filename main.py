@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 
@@ -42,16 +42,18 @@ def get_fun_fact(n: int) -> str:
 
 
 @app.get("/api/classify-number")
-async def classify_number(number: str = Query(..., description="The number to analyze")):
-    if not number.isdigit():  # Check if input is not a number
-        raise HTTPException(status_code=400, detail={
-                            "number": number, "error": True})
+async def classify_number(number: int = Query(..., description="The number to analyze")):
+    if not isinstance(number, int):
+        return {"number": number, "error": True}
 
-    number = int(number)  # Convert to integer
-
-    properties = ["even" if number % 2 == 0 else "odd"]
+    properties = []
     if is_armstrong(number):
         properties.append("armstrong")
+    if number % 2 == 0:
+        properties.append("even")
+    else:
+        properties.append("odd")
+
 
     return {
         "number": number,
