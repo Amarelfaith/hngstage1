@@ -43,15 +43,18 @@ def get_fun_fact(n: int) -> str:
 
 @app.get("/api/classify-number")
 async def classify_number(number: str = Query(..., description="The number to analyze")):
-    if not number.isdigit():  # Check if input is not a number
+    if not number.isdigit():
         raise HTTPException(status_code=400, detail={
                             "number": number, "error": True})
 
-    number = int(number)  # Convert to integer
-
+    number = int(number)
     properties = ["even" if number % 2 == 0 else "odd"]
+
     if is_armstrong(number):
         properties.append("armstrong")
+
+    # Fetch fun fact asynchronously
+    fun_fact = await get_fun_fact(number)
 
     return {
         "number": number,
@@ -59,5 +62,5 @@ async def classify_number(number: str = Query(..., description="The number to an
         "is_perfect": is_perfect(number),
         "properties": properties,
         "digit_sum": sum(int(digit) for digit in str(number)),
-        "fun_fact": get_fun_fact(number)
+        "fun_fact": fun_fact
     }
