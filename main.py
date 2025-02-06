@@ -54,6 +54,10 @@ async def classify_number(number: str = Query(..., description="The number to an
         raise HTTPException(status_code=400, detail={
                             "number": number, "error": True})
 
+    number = int(number)  # Convert to integer after validation
+
+    
+
 
 
 
