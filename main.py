@@ -45,6 +45,8 @@ def get_fun_fact(n: int) -> str:
 async def classify_number(number: int = Query(..., description="The number to analyze", gt=0)):
     if not isinstance(number, int):
         return {"number": number, "error": True}
+    else:
+        return response.status_code == 404
 
     properties = []
     if is_armstrong(number):
