@@ -42,10 +42,9 @@ def get_fun_fact(n: int) -> str:
 
 
 @app.get("/api/classify-number")
-async def classify_number(number: int = Query(..., description="The number to analyze")):
+async def classify_number(number: int = Query(..., description="The number to analyze", gt=0)):
     if not isinstance(number, int):
         return {"number": number, "error": True}
-
 
     properties = []
     if is_armstrong(number):
