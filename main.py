@@ -42,14 +42,16 @@ def get_fun_fact(n: int) -> str:
 
 
 @app.get("/api/classify-number")
-async def classify_number(number = Query(..., description="The number to analyze")):
-    try:
-        if not isinstance(number, int):
-            raise HTTPException(status_code=404, detail="Number not found")
-    except:   
-        number = int(number)
-        if type(number) != int or number < 0:
-            raise HTTPException(status_code=404, detail="Number not found")
+async def classify_number(number=Query(..., description="The number to analyze", gt=0)):
+    if not isinstance(number, int):
+        raise HTTPException(
+            status_code=400, detail="Number must be non-negative")
+    """if not isinstance(number, int):
+        raise HTTPException(status_code=404, detail="Number not found")
+
+    number = int(number)
+    if type(number) != int or number < 0:
+        raise HTTPException(status_code=404, detail="Number not found")"""
 
     properties = []
     if is_armstrong(number):

@@ -61,3 +61,83 @@ async def classify_number(number: str = Query(..., description="The number to an
         "digit_sum": sum(int(digit) for digit in str(number)),
         "fun_fact": get_fun_fact(number)
     }
+
+
+from fastapi import FastAPI, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import requests
+
+app = FastAPI()
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change this to specific origins in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+def is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    for i in range(2, int(n ** 0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+
+def is_perfect(n: int) -> bool:
+    return n == sum(i for i in range(1, n) if n % i == 0)
+
+
+def is_armstrong(n: int) -> bool:
+    digits = [int(d) for d in str(n)]
+    power = len(digits)
+    return sum(d ** power for d in digits) == n
+
+
+def get_fun_fact(n: int) -> str:
+    try:
+        response = requests.get(f"http://numbersapi.com/{n}")
+        return response.text if response.status_code == 200 else "No fact available."
+    except requests.RequestException:
+        return "No fact available."
+
+
+@app.get("/api/classify-number")
+async def classify_number(number = Query(..., description="The number to analyze", gt=0)):
+    if not isinstance(number, int):
+        raise HTTPException(
+            status_code=400, detail="Number must be non-negative")
+    """if not isinstance(number, int):
+        raise HTTPException(status_code=404, detail="Number not found")
+
+    number = int(number)
+    if type(number) != int or number < 0:
+        raise HTTPException(status_code=404, detail="Number not found")"""
+
+    properties = []
+    if is_armstrong(number):
+        properties.append("armstrong")
+
+    if number % 2 == 0:
+        properties.append("even")
+    else:
+        properties.append("odd")
+
+    return {
+        "number": number,
+        "is_prime": is_prime(number),
+        "is_perfect": is_perfect(number),
+        "properties": properties,
+        "digit_sum": sum(int(digit) for digit in str(number)),
+        "fun_fact": get_fun_fact(number)
+    }
+
+
+
+
+
+
