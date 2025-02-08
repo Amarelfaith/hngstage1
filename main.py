@@ -1,72 +1,66 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-import requests
+from fastapi.responses import JSONResponse
+from utils import is_armstrong, is_perfect, is_prime, digit_sum
+import httpx
 
-app = FastAPI()
+app = FastAPI(
+    title="Number Classification API",
+    description="An API that classifies a number with its properties and provides a fun fact.",
+    version="1.0.0"
+)
 
-# Enable CORS
+# Enable CORS for all origins (adjust as needed)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change this to specific origins in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-def is_prime(n: int) -> bool:
-    if n < 2:
-        return False
-    for i in range(2, int(n ** 0.5) + 1):
-        if n % i == 0:
-            return False
-    return True
+# API endpoint
+@app.get("/api/classify-number", status_code=200)
+async def classify_number(number: str = Query(..., description="The number to classify")):
 
-
-def is_perfect(n: int) -> bool:
-    return n == sum(i for i in range(1, n) if n % i == 0)
-
-
-def is_armstrong(n: int) -> bool:
-    digits = [int(d) for d in str(n)]
-    power = len(digits)
-    return sum(d ** power for d in digits) == n
-
-
-def get_fun_fact(n: int) -> str:
     try:
-        response = requests.get(f"http://numbersapi.com/{n}")
-        return response.text if response.status_code == 200 else "No fact available."
-    except requests.RequestException:
-        return "No fact available."
-
-
-@app.get("/api/classify-number")
-async def classify_number(number=Query(..., description="The number to analyze", gt=0)):
-    if not isinstance(number, int):
-        raise HTTPException(
-            status_code=400, detail="Number must be non-negative")
-    """if not isinstance(number, int):
-        raise HTTPException(status_code=404, detail="Number not found")
-
-    number = int(number)
-    if type(number) != int or number < 0:
-        raise HTTPException(status_code=404, detail="Number not found")"""
-
+        n = int(number)
+    except ValueError:
+        return JSONResponse(status_code=400, content={"number": number, "error": True})
+    
+    # Determine properties
+    prime = is_prime(n)
+    perfect = is_perfect(n)
+    armstrong = is_armstrong(n)
+    parity = "even" if abs(n) % 2 == 0 else "odd"
+    
     properties = []
-    if is_armstrong(number):
+    if armstrong:
         properties.append("armstrong")
-
-    if number % 2 == 0:
-        properties.append("even")
-    else:
-        properties.append("odd")
-
+    properties.append(parity)
+    
+    dsum = digit_sum(n)
+    
+    # Get fun fact from the Numbers API (e.g., http://numbersapi.com/371?json)
+    fun_fact = ""
+    try:
+        async with httpx.AsyncClient() as client:
+            url = f"http://numbersapi.com/{n}/math?json"
+            response = await client.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                fun_fact = data.get("text", "No fun fact available.")
+            else:
+                fun_fact = "No fun fact available."
+    except Exception:
+        fun_fact = "No fun fact available."
+    
     return {
-        "number": number,
-        "is_prime": is_prime(number),
-        "is_perfect": is_perfect(number),
+        "number": n,
+        "is_prime": prime,
+        "is_perfect": perfect,
         "properties": properties,
-        "digit_sum": sum(int(digit) for digit in str(number)),
-        "fun_fact": get_fun_fact(number)
+        "digit_sum": dsum,
+        "fun_fact": fun_fact
     }
